@@ -60,6 +60,9 @@ const App = () => {
     }
   }, [message, currTitle]);
 
+  const handleOptionsClick = (index) => {
+    console.log("hello")
+    setMessage(index === message ? null : index);
   };
   const currentChat = prevChat.filter(prevChats => prevChats.title == currTitle);
   const uniqueTitles = Array.from(new Set(prevChat.map(prevChats => prevChats.title)));
