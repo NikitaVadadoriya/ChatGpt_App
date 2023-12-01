@@ -77,6 +77,7 @@ const App = () => {
         {!currTitle && 
         <div style={{marginTop:'150px'}}>
           <img src={chatIcon} /><h1 style={{marginTop:'-10px'}}>How can i help you today ?</h1></div>}
+        
         <ul className="feed">
           {currentChat?.map((currMessage, index) => <li key={index}>
             <p className="role">{currMessage.role}</p>

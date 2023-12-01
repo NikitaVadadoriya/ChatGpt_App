@@ -3,6 +3,7 @@
 * {
   color:#fff;
     font-family: 'Open Sans',sans-serif;
+    overflow-x: none;
 }
 
 body {
@@ -23,12 +24,14 @@ body {
     flex-direction: column;
     justify-content: space-between;
 }
+
 img {
     width: 80px;
     height: 80px;
     padding: 10px;
     margin:10px;
 }
+
 button {
     border-radius: 5px;
     border:solid 0.5px rgba(255,255,255,0.5);
@@ -42,20 +45,24 @@ nav{
     padding: 10px;
     margin:10px;
 }
+
 .history {
     padding: 10px;
     margin:10px;
     height: 100%;
 }
+
 .history li {
     list-style-type: none;
     padding: 15px 0;
     cursor: pointer;
 }
+
 .history li:hover {
     border-radius: 15px;
     background-color: #323441;
 }
+
 .main{
     height: 100vh;
     width: 100%;
@@ -65,6 +72,7 @@ nav{
     align-items: center;
     text-align: center;
 }
+
 .info {
     color: rgb(255,255,255,0.5);
     font-size:11px;
@@ -98,9 +106,7 @@ input {
     rgba(0,0,0,0.05) 0 12px 3px,
     rgba(0,0,0,0.05) 0 -3px 5px,
 }
-placeholder {
-    font-size: 15px ;
-}
+
 input:focus{
     outline: none;
 }
@@ -112,17 +118,15 @@ input:focus{
 }
 
 .feed {
-    overflow: scroll;
-    width: 100%;
+    width: 90%;
     padding:  0;
-    margin-left: 100px;
-    
+    overflow-y: auto;
 }
 
 .feed li {
      display: flex;
      background-color: #3b3d4a;
-     width: 100%;
+     width: 90%;
      padding: 20px;
      margin: 20px 0;
 }
