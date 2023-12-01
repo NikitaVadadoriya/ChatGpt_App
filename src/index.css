@@ -56,6 +56,7 @@ nav{
     list-style-type: none;
     padding: 15px 0;
     cursor: pointer;
+    padding-left: 12px;
 }
 
 .history li:hover {
@@ -129,6 +130,7 @@ input:focus{
      width: 90%;
      padding: 20px;
      margin: 20px 0;
+     border-radius: 10px;
 }
 
 .feed p{
