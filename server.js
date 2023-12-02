@@ -13,7 +13,7 @@ const openai =new OpenAi({
 
 app.post('/chat',async(req,res)=>{
   const completion = await openai.chat.completions.create({
-    messages: [{ role: "system", content: req.body.message}],
+    messages: [{ role: "user", content: req.body.message}],
     model: "gpt-3.5-turbo",
   });
   console.log(completion.choices[0]);
