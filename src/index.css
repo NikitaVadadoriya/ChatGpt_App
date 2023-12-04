@@ -25,7 +25,7 @@ body {
     justify-content: space-between;
 }
 
-img {
+.chaticon {
     width: 80px;
     height: 80px;
     padding: 10px;
@@ -59,9 +59,9 @@ nav{
     padding-left: 12px;
 }
 
-.history li:hover {
+.title:hover {
     border-radius: 15px;
-    /* background-color: #323441; */
+    background-color: #323441;
 }
 
 .main{
