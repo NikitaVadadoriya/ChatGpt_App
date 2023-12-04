@@ -5,10 +5,8 @@ import SendIcon from "@mui/icons-material/Send";
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import Avatar from '@mui/material/Avatar';
-import { deepOrange, deepPurple ,grey} from '@mui/material/colors';
+import { deepOrange } from '@mui/material/colors';
 import axios from "axios";
-import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutline';
-
 
 const App = () => {
   const [value, setValue] = useState(null);
@@ -21,30 +19,34 @@ const App = () => {
   const [newTitle, setNewTitle] = useState('');
   const [isTitleEditing, setIsTitleEditing] = useState(false);
 
+  // Create new Chat ✔
   const createNewChat = () => {
     setMessage(null);
     setValue("");
     setCurrTitle(null);
   };
 
+  // title click and view chat ✔
   const handleClick = (uniqueTitle) => {
     setCurrTitle(uniqueTitle);
     setMessage(null);
     setValue("");
   };
 
+  //create chat and get chat response ✔
   const getMessages = async (req, res) => {
     try {
       const response = await axios.post("http://localhost:5000/chat", {
         message: value,
       });
-      console.log(response.data.message);
+      // console.log(response.data.message);
       setMessage(response.data.message);
     } catch (error) {
       console.error(error);
     }
   };
 
+  // prev chat are store in feed ✔
   useEffect(() => {
     if (!currTitle && value && message) {
       setCurrTitle(value);
@@ -69,16 +71,20 @@ const App = () => {
     }
   }, [message, currTitle]);
 
+  // ellipse click and open box ✔
   const handleOptionsClick = (index) => {
     setOptionsIndex((prevIndex) => (prevIndex === index ? null : index));
   };
 
+  // view chat in feed ✔
   const currentChat = prevChat.filter((prevChats) => prevChats.title == currTitle);
 
+  // edit question ✔
   const handleEditClick = (index) => {
     setEditingMessageIndex(index);
   };
 
+  // edited question save ✔
   const handleSaveEdit = (index) => {
     const updatedChat = [...currentChat];
     updatedChat[index].content = value;
@@ -111,17 +117,20 @@ const App = () => {
       });
   };
 
+  //cancle edit in chat ✔
   const handleCancelEdit = () => {
     setMessage('');
     setEditingMessageIndex(null);
   };
 
+  //rename title in side-bar ✔
   const handleRenameClick = (index) => {
     setRenameIndex(index);
     setNewTitle(currTitle);
     setIsTitleEditing(true);
   };
 
+  //edited title save ✔
   const handleSaveRename = () => {
     if (newTitle.trim() !== '') {
       const updatedChat = [...prevChat];
@@ -146,11 +155,13 @@ const App = () => {
     }
   };
 
+  //cancle rename title ✔
   const handleCancelRename = () => {
     setRenameIndex(null);
     setIsTitleEditing(false);
   };
 
+  // delete chat history ✔
   const handleDelete = (index) => {
     if (window.confirm('Are you sure you want to delete this chat history?')) {
       const updatedChat = [...prevChat];
@@ -158,10 +169,6 @@ const App = () => {
       setPrevChat(updatedChat.filter((chat) => chat.title !== deletedTitle));
       setOptionsIndex(null);
     }
-  };
-
-  const handleTitleChange = (e) => {
-    setNewTitle(e.target.value);
   };
 
   const handleTitleKeyPress = (e) => {
@@ -189,7 +196,7 @@ const App = () => {
                   <input
                     type="text"
                     value={newTitle}
-                    onChange={handleTitleChange}
+                    onChange={(e) => setNewTitle(e.target.value)}
                     onKeyPress={handleTitleKeyPress}
                     placeholder="Enter new title..."
                     style={{ width: '70%', marginRight: '10px' }}
@@ -198,9 +205,8 @@ const App = () => {
                   <button onClick={handleCancelRename}>Cancel</button>
                 </>
               ) : (
-                
-                 <> 
-                 {uniqueTitle.slice(0, 14)}
+                <>
+                  {uniqueTitle.slice(0, 18)}
                   <button
                     style={{ color: 'white', cursor: 'pointer', border: 'none' }}
                     onClick={() => handleOptionsClick(index)}
@@ -235,6 +241,7 @@ const App = () => {
       </section>
 
       <section className="main">
+
         {!currTitle && (
           <div style={{ marginTop: '150px' }}>
             <img className="chaticon" src={chatIcon} />
@@ -245,7 +252,9 @@ const App = () => {
         <ul className="feed">
           {currentChat?.map((currMessage, index) => (
             <li key={index}>
-              {currMessage.role === 'assistant' ? <><img src={chat} alt="icon" style={{width:'30px',height:'30px', borderRadius: '50%'}}/> <strong>&nbsp;ChatGPT: </strong> </>: <><Avatar sx={{ bgcolor: deepOrange[300],width: '30px', height: '30px'}}>N</Avatar><strong>&nbsp;You: <br /> </strong></>}{' '}
+              {currMessage.role === 'assistant' ? 
+              <><img src={chat} alt="icon" style={{ width: '30px', height: '30px', borderRadius: '50%' }} /> <strong>&nbsp;&nbsp;ChatGPT: </strong> </> 
+              : <><Avatar sx={{ bgcolor: deepOrange[300], width: '30px', height: '30px' }}>N</Avatar><strong>&nbsp;&nbsp;You: <br /> </strong></>}{' '}
               {editingMessageIndex === index ? (
                 <input
                   type="text"
@@ -256,10 +265,7 @@ const App = () => {
                 />
               ) : (
                 <span>
-                  <br />
-                  <br />
-                  {currMessage.content}
-                  <br />
+                  <br /><br />{currMessage.content}<br />
                 </span>
               )}
               {editingMessageIndex === index ? (
@@ -269,7 +275,7 @@ const App = () => {
                 </>
               ) : (
                 currMessage.role === 'user' ? (
-                  <button style={{ border: 'none',marginLeft:'300px'}} onClick={() => handleEditClick(index)}>
+                  <button style={{ border: 'none', marginLeft: '600px' }} onClick={() => handleEditClick(index)}>
                     <EditIcon sx={{ fontSize: 20 }} />
                   </button>
                 ) : null
@@ -280,14 +286,14 @@ const App = () => {
 
         <div className="bottom-section">
           <div className="input-container">
-            <input value={value} onChange={(e) => setValue(e.target.value)}
+            <input value={value}
+              onChange={(e) => setValue(e.target.value)}
               onKeyPress={handlechatKeyPress}
               placeholder="Message ChatGPT  ..." />
             <div id="submit" onClick={getMessages}>
               <SendIcon />
-            </div>  
+            </div>
           </div>
-
           <p className="info">ChatGPT can make mistakes. Consider checking important information.</p>
         </div>
       </section>
