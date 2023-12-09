@@ -2,299 +2,332 @@ import { useEffect, useState } from "react";
 import chatIcon from "./images/chatgpticon.png";
 import chat from "./images/images.png";
 import SendIcon from "@mui/icons-material/Send";
-import EditIcon from '@mui/icons-material/Edit';
-import DeleteIcon from '@mui/icons-material/Delete';
-import Avatar from '@mui/material/Avatar';
-import { deepOrange } from '@mui/material/colors';
+import EditIcon from "@mui/icons-material/Edit";
+import ModeOutlinedIcon from "@mui/icons-material/ModeOutlined";
+import DeleteIcon from "@mui/icons-material/Delete";
+import Avatar from "@mui/material/Avatar";
+import { deepOrange } from "@mui/material/colors";
 import axios from "axios";
 
 const App = () => {
-  const [value, setValue] = useState(null);
-  const [message, setMessage] = useState(null);
-  const [prevChat, setPrevChat] = useState([]);
-  const [currTitle, setCurrTitle] = useState(null);
+  const [value, setValue] = useState("");
+  const [message, setMessage] = useState("");
+  const [chatHistory, setChatHistory] = useState([]);
   const [editingMessageIndex, setEditingMessageIndex] = useState(null);
   const [optionsIndex, setOptionsIndex] = useState(null);
   const [renameIndex, setRenameIndex] = useState(null);
-  const [newTitle, setNewTitle] = useState('');
+  const [newTitle, setNewTitle] = useState("");
   const [isTitleEditing, setIsTitleEditing] = useState(false);
+  const [selectedChatTitle, setSelectedChatTitle] = useState(false);
+  const [chatTitles, setChatTitles] = useState([]);
+  useEffect(() => {
+    fetchChatHistory();
+  }, []);
 
-  // Create new Chat ✔
-  const createNewChat = () => {
-    setMessage(null);
+  const NewChat = () => {
+    setEditingMessageIndex(null);
+    setOptionsIndex(null);
+    setRenameIndex(null);
+    setIsTitleEditing(false);
     setValue("");
-    setCurrTitle(null);
+    setMessage("");
   };
 
-  // title click and view chat ✔
-  const handleClick = (uniqueTitle) => {
-    setCurrTitle(uniqueTitle);
-    setMessage(null);
-    setValue("");
+  const fetchChatHistory = async () => {
+    try {
+      const response = await axios.get("http://localhost:5000/chat/history");
+      setChatHistory(response.data);
+      setChatTitles(
+        response.data.filter((message) => message.role === "user").map(
+          (message) => message.title || message.content
+        )
+      );
+    } catch (error) {
+      console.error("Error fetching chat history:", error);
+    }
   };
 
-  //create chat and get chat response ✔
-  const getMessages = async (req, res) => {
+  const createNewChat = async () => {
     try {
       const response = await axios.post("http://localhost:5000/chat", {
         message: value,
       });
-      // console.log(response.data.message);
+      setChatHistory((prevHistory) => [
+        ...prevHistory,
+        { role: "user", content: value, title: response.data.title },
+        {
+          role: "assistant",
+          content: response.data.message,
+          title: response.data.title,
+        },
+      ]);
       setMessage(response.data.message);
     } catch (error) {
-      console.error(error);
+      console.error("Error creating chat:", error);
     }
   };
 
-  // prev chat are store in feed ✔
-  useEffect(() => {
-    if (!currTitle && value && message) {
-      setCurrTitle(value);
-    }
-    if (currTitle && value && message) {
-      const existingTitleIndex = prevChat.findIndex(
-        (item) => item.title === currTitle && item.role === "user" && item.content === value
-      );
-
-      if (existingTitleIndex !== -1) {
-        const updatedChat = [...prevChat];
-        updatedChat[existingTitleIndex] = { title: currTitle, role: "user", content: value };
-        updatedChat[existingTitleIndex + 1] = { title: currTitle, role: message.role, content: message.content };
-        setPrevChat(updatedChat);
-      } else {
-        setPrevChat((prevChats) => [
-          ...prevChats,
-          { title: currTitle, role: "user", content: value },
-          { title: currTitle, role: message.role, content: message.content },
-        ]);
-      }
-    }
-  }, [message, currTitle]);
-
-  // ellipse click and open box ✔
-  const handleOptionsClick = (index) => {
-    setOptionsIndex((prevIndex) => (prevIndex === index ? null : index));
-  };
-
-  // view chat in feed ✔
-  const currentChat = prevChat.filter((prevChats) => prevChats.title == currTitle);
-
-  // edit question ✔
   const handleEditClick = (index) => {
     setEditingMessageIndex(index);
   };
 
-  // edited question save ✔
-  const handleSaveEdit = (index) => {
-    const updatedChat = [...currentChat];
-    updatedChat[index].content = value;
-
-    axios.post("http://localhost:5000/chat", {
-      message: value,
-    })
-      .then((response) => {
-        updatedChat[index + 1].content = response.data.message.content;
-
-        setPrevChat((prevHistory) => {
-          const updatedHistory = [...prevHistory];
-          const titleIndex = updatedHistory.findIndex(
-            (item) => item.title === currTitle && item.role === 'user' && item.content === value
-          );
-
-          if (titleIndex !== -1) {
-            updatedHistory[titleIndex] = { title: currTitle, role: 'user', content: value };
-            updatedHistory[titleIndex + 1] = { title: currTitle, role: 'assistant', content: response.data.message.content };
-          }
-
-          return updatedHistory;
-        });
-
-        setValue('');
-        setEditingMessageIndex(null);
-      })
-      .catch((error) => {
-        console.error('Error updating chat:', error);
-      });
-  };
-
-  //cancle edit in chat ✔
   const handleCancelEdit = () => {
-    setMessage('');
+    setMessage("");
     setEditingMessageIndex(null);
   };
 
-  //rename title in side-bar ✔
+  const handleEdit = async (index) => {
+    try {
+      const response = await axios.put(
+        `http://localhost:5000/chat/edit/${index}`,
+        {
+          newQuestion: value,
+        }
+      );
+      setChatHistory((prevHistory) => {
+        const updatedHistory = [...prevHistory];
+        updatedHistory[index * 2 + 0].content = value;
+        updatedHistory[index * 2 + 1].content = response.data.message;
+        return updatedHistory;
+      });
+      setEditingMessageIndex(null);
+    } catch (error) {
+      console.error("Error editing question:", error);
+    }
+  };
+
+  const handleTitleClick = (content) => {
+    setMessage(null);
+    setSelectedChatTitle(content);
+  };
+
+  const handleOptionsClick = (index) => {
+    setOptionsIndex((prevIndex) => (prevIndex === index ? null : index));
+  };
+
   const handleRenameClick = (index) => {
     setRenameIndex(index);
-    setNewTitle(currTitle);
+    setNewTitle(chatHistory[index]?.title || chatHistory[index]?.content);
     setIsTitleEditing(true);
   };
 
-  //edited title save ✔
-  const handleSaveRename = () => {
-    if (newTitle.trim() !== '') {
-      const updatedChat = [...prevChat];
-      const titles = Array.from(new Set(updatedChat.map((chat) => chat.title)));
+  const handleSaveRename = async (index) => {
+    try {
+      setNewTitle(chatHistory[index]?.content);
+      const response = await axios.put(
+        `http://localhost:5000/chat/rename/${index}`,
+        {
+          newTitle,
+        }
+      );
 
-      if (!titles.includes(newTitle)) {
-        updatedChat.forEach((chat, i) => {
-          if (chat.title === currTitle) {
-            updatedChat[i].title = newTitle;
-          }
-        });
-
-        setPrevChat(updatedChat);
+      if (response.data.success) {
+        const updatedChatHistory = [...chatHistory];
+        updatedChatHistory[index * 2].title = newTitle;
+        setChatHistory(updatedChatHistory);
         setRenameIndex(null);
         setOptionsIndex(null);
         setIsTitleEditing(false);
       } else {
-        alert('Title already exists. Please choose a different title.');
+        console.error("Error renaming chat title:", response.data.error);
       }
-    } else {
-      alert('Please enter a valid title.');
+    } catch (error) {
+      console.error("Error saving rename:", error);
     }
   };
 
-  //cancle rename title ✔
   const handleCancelRename = () => {
     setRenameIndex(null);
     setIsTitleEditing(false);
   };
 
-  // delete chat history ✔
-  const handleDelete = (index) => {
-    if (window.confirm('Are you sure you want to delete this chat history?')) {
-      const updatedChat = [...prevChat];
-      const deletedTitle = updatedChat[index].title;
-      setPrevChat(updatedChat.filter((chat) => chat.title !== deletedTitle));
-      setOptionsIndex(null);
-    }
-  };
-
-  const handleTitleKeyPress = (e) => {
-    if (e.key === 'Enter') {
-      handleSaveRename();
+  const handleDelete = async (index) => {
+    if (window.confirm("Are you sure you want to delete this chat history?")) {
+      try {
+        const response = await axios.delete(
+          `http://localhost:5000/chat/delete/${index}`
+        );
+        if (response.data.success) {
+          setChatHistory((prevHistory) => [
+            ...prevHistory.slice(0, index * 2),
+            ...prevHistory.slice(index * 2 + 2),
+          ]);
+        }
+      } catch (error) {
+        console.error("Error deleting chat:", error);
+      }
     }
   };
 
   const handlechatKeyPress = (e) => {
-    if (e.key === 'Enter') {
-      getMessages();
+    if (e.key === "Enter") {
+      createNewChat();
     }
   };
 
   return (
     <div className="app">
       <section className="side-bar">
-        <button onClick={createNewChat}>+ New Chat</button>
-
+        <button onClick={NewChat}>+ New Chat</button>
         <ul className="history">
-          {Array.from(new Set(prevChat.map((prevChats) => prevChats.title)))?.map((uniqueTitle, index) => (
-            <li key={index} onClick={() => handleClick(uniqueTitle)}>
+          {Array.from(
+            new Set(
+              chatHistory
+                .filter((message) => message.role === "user")
+                .map((message) =>  message.title || message.content)
+            )
+          ).map((content, index) => (
+            <li key={index} onClick={() => handleTitleClick(content)}>
               {renameIndex === index && isTitleEditing ? (
                 <>
                   <input
                     type="text"
                     value={newTitle}
                     onChange={(e) => setNewTitle(e.target.value)}
-                    onKeyPress={handleTitleKeyPress}
                     placeholder="Enter new title..."
-                    style={{ width: '70%', marginRight: '10px' }}
+                    style={{ width: "70%", marginRight: "10px" }}
                   />
-                  <button onClick={handleSaveRename}>Save</button>
+                  <button onClick={() => handleSaveRename(index)}>Save</button>
                   <button onClick={handleCancelRename}>Cancel</button>
                 </>
               ) : (
                 <>
-                  {uniqueTitle.slice(0, 18)}
-                  <button
-                    style={{ color: 'white', cursor: 'pointer', border: 'none' }}
-                    onClick={() => handleOptionsClick(index)}
-                  >
-                    ...
-                  </button>
-                  {optionsIndex === index && (
-                    <div className="box">
-                      <button
-                        onClick={() => handleRenameClick(index)}
-                        style={{ color: 'white', cursor: 'pointer', border: 'none' }}
-                      >
-                        <EditIcon /> Rename
-                      </button>
-                      <button
-                        onClick={() => handleDelete(index)}
-                        style={{ color: 'white', cursor: 'pointer', border: 'none', paddingBottom: '10px' }}
-                      >
-                        <DeleteIcon /> Delete
-                      </button>
-                    </div>
-                  )}
+                 {content}
+                  <>
+                    <button
+                      style={{
+                        color: "white",
+                        cursor: "pointer",
+                        border: "none",
+                      }}
+                      onClick={() => handleOptionsClick(index)}
+                    >
+                      ...
+                    </button>
+                    {optionsIndex === index && (
+                      <div className="box">
+                        <button
+                          onClick={() => handleRenameClick(index)}
+                          style={{
+                            color: "white",
+                            cursor: "pointer",
+                            border: "none",
+                          }}
+                        >
+                          <EditIcon /> Rename
+                        </button>
+                        <button
+                          onClick={() => handleDelete(index)}
+                          style={{
+                            color: "white",
+                            cursor: "pointer",
+                            border: "none",
+                            paddingBottom: "10px",
+                          }}
+                        >
+                          <DeleteIcon /> Delete
+                        </button>
+                      </div>
+                    )}
+                  </>
                 </>
               )}
             </li>
           ))}
         </ul>
-
         <nav>
-          <Avatar sx={{ bgcolor: deepOrange[500] }}>N</Avatar> <p style={{ marginLeft: '50px', marginTop: '-30px' }}>Nikita Patel</p>
+          <Avatar sx={{ bgcolor: deepOrange[500] }}>N</Avatar>{" "}
+          <p style={{ marginLeft: "50px", marginTop: "-30px" }}>Nikita Patel</p>
         </nav>
       </section>
 
       <section className="main">
-
-        {!currTitle && (
-          <div style={{ marginTop: '150px' }}>
-            <img className="chaticon" src={chatIcon} />
-            <h1 style={{ marginTop: '-10px' }}>How can I help you today?</h1>
-          </div>
-        )}
-
         <ul className="feed">
-          {currentChat?.map((currMessage, index) => (
+          {chatHistory.map((currMessage, index) => (
             <li key={index}>
-              {currMessage.role === 'assistant' ? 
-              <><img src={chat} alt="icon" style={{ width: '30px', height: '30px', borderRadius: '50%' }} /> <strong>&nbsp;&nbsp;ChatGPT: </strong> </> 
-              : <><Avatar sx={{ bgcolor: deepOrange[300], width: '30px', height: '30px' }}>N</Avatar><strong>&nbsp;&nbsp;You: <br /> </strong></>}{' '}
+               
+              {currMessage.role === "assistant" ? (
+                <>
+                  <img
+                    src={chat}
+                    alt="icon"
+                    style={{
+                      width: "30px",
+                      height: "30px",
+                      borderRadius: "50%",
+                    }}
+                  />{" "}
+                  <strong>&nbsp;&nbsp;ChatGPT: </strong>{" "}
+                </>
+              ) : (
+                <>
+                  <Avatar
+                    sx={{
+                      bgcolor: deepOrange[300],
+                      width: "30px",
+                      height: "30px",
+                    }}
+                  >
+                    N
+                  </Avatar>
+                  <strong>
+                    &nbsp;&nbsp;You: <br />{" "}
+                  </strong>
+                </>
+              )}{" "}
               {editingMessageIndex === index ? (
                 <input
                   type="text"
                   value={value}
                   onChange={(e) => setValue(e.target.value)}
                   placeholder="Edit your message..."
-                  style={{ marginLeft: '10px', backgroundColor: '#323441' }}
+                  style={{ marginLeft: "10px", backgroundColor: "#323441" }}
                 />
               ) : (
                 <span>
-                  <br /><br />{currMessage.content}<br />
+                  <br />
+                  <br />
+                  {currMessage.content}
+                  <br />
                 </span>
               )}
               {editingMessageIndex === index ? (
                 <>
-                  <button onClick={() => handleSaveEdit(index)}>Save</button>
+                  <button
+                    onClick={() => handleEdit(index)}
+                    backgroundColor="success"
+                  >
+                    Save&Submit
+                  </button>
                   <button onClick={handleCancelEdit}>Cancel</button>
                 </>
-              ) : (
-                currMessage.role === 'user' ? (
-                  <button style={{ border: 'none', marginLeft: '600px' }} onClick={() => handleEditClick(index)}>
-                    <EditIcon sx={{ fontSize: 20 }} />
-                  </button>
-                ) : null
-              )}
+              ) : currMessage.role === "user" ? (
+                <button
+                  style={{ border: "none" }}
+                  onClick={() => handleEditClick(index)}
+                >
+                  <br /> <ModeOutlinedIcon sx={{ fontSize: 15 }} />
+                </button>
+              ) : null}
             </li>
           ))}
         </ul>
 
         <div className="bottom-section">
           <div className="input-container">
-            <input value={value}
+            <input
+              value={value}
               onChange={(e) => setValue(e.target.value)}
               onKeyPress={handlechatKeyPress}
-              placeholder="Message ChatGPT  ..." />
-            <div id="submit" onClick={getMessages}>
+              placeholder="Message ChatGPT  ..."
+            />
+            <div id="submit" onClick={createNewChat}>
               <SendIcon />
             </div>
           </div>
-          <p className="info">ChatGPT can make mistakes. Consider checking important information.</p>
+          <p className="info">
+            ChatGPT can make mistakes. Consider checking important information.
+          </p>
         </div>
       </section>
     </div>
